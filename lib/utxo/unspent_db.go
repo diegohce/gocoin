@@ -55,10 +55,10 @@ type UnspentDB struct {
 
 	lastBlockHash      []byte
 	lastBlockHeight    uint32
-	ComprssedUTXO      bool
+	comprssedUTXO      bool
 	dir_utxo, dir_undo string
 	volatimemode       bool
-	UnwindBufLen       uint32
+	unwindBufLen       uint32
 	dirtyDB            sys.SyncBool
 	sync.Mutex
 
@@ -95,7 +95,7 @@ func NewUnspentDb_builtin(opts *NewUnspentOpts) (db *UnspentDB) {
 	db.dir_utxo = opts.Dir
 	db.dir_undo = db.dir_utxo + "undo" + string(os.PathSeparator)
 	db.volatimemode = opts.VolatimeMode
-	db.UnwindBufLen = 256
+	db.unwindBufLen = 256
 	db.CB = opts.CB
 	db.abortwritingnow = make(chan bool, 1)
 	db.hurryup = make(chan bool, 1)
@@ -138,7 +138,7 @@ redo:
 	db.lastBlockHeight = uint32(u64)
 
 	// If the highest bit of the block number is set, the UTXO records are compressed
-	db.ComprssedUTXO = (u64 & 0x8000000000000000) != 0
+	db.comprssedUTXO = (u64 & 0x8000000000000000) != 0
 
 	db.lastBlockHash = make([]byte, 32)
 	_, er = rd.Read(db.lastBlockHash)
@@ -155,7 +155,7 @@ redo:
 	perc = 0
 
 	db.hashMap = make(map[UtxoKeyType][]byte, int(u64))
-	if db.ComprssedUTXO {
+	if db.comprssedUTXO {
 		info = fmt.Sprint("\rLoading ", u64, " compressed txs from ", fname, " - ")
 	} else {
 		info = fmt.Sprint("\rLoading ", u64, " plain txs from ", fname, " - ")
@@ -197,7 +197,7 @@ redo:
 	fmt.Print("\r                                                                 \r")
 
 	atomic.StoreUint32(&db.CurrentHeightOnDisk, db.lastBlockHeight)
-	if db.ComprssedUTXO {
+	if db.comprssedUTXO {
 		FullUtxoRec = FullUtxoRecC
 		NewUtxoRecStatic = NewUtxoRecStaticC
 		NewUtxoRec = NewUtxoRecC
@@ -244,7 +244,7 @@ func (db *UnspentDB) save() {
 
 	buf := bytes.NewBuffer(make([]byte, 0, save_buffer_min+0x1000)) // add 4K extra for the last record (it will still be able to grow over it)
 	u64 := uint64(db.lastBlockHeight)
-	if db.ComprssedUTXO {
+	if db.comprssedUTXO {
 		u64 |= 0x8000000000000000
 	}
 	binary.Write(buf, binary.LittleEndian, u64)
@@ -401,8 +401,8 @@ func (db *UnspentDB) CommitBlockTxs(changes *BlockChanges, blhash []byte) (e err
 	copy(db.lastBlockHash, blhash)
 	db.lastBlockHeight = changes.Height
 
-	if changes.Height > db.UnwindBufLen {
-		os.Remove(fmt.Sprint(db.dir_undo, changes.Height-db.UnwindBufLen))
+	if changes.Height > db.unwindBufLen {
+		os.Remove(fmt.Sprint(db.dir_undo, changes.Height-db.unwindBufLen))
 	}
 
 	db.dirtyDB.Set()
@@ -666,7 +666,7 @@ func (db *UnspentDB) UTXOStats() (s string) {
 		float64(sum)/1e8, outcnt, lele, float64(sumcb)/1e8)
 	s += fmt.Sprintf(" MaxTxOutCnt: %d  dirtyDB: %t  Writing: %t  Abort: %t  Compressed: %t\n",
 		len(rec_outs), db.dirtyDB.Get(), db.WritingInProgress.Get(), len(db.abortwritingnow) > 0,
-		db.ComprssedUTXO)
+		db.comprssedUTXO)
 	s += fmt.Sprintf(" Last Block : %s @ %d\n", btc.NewUint256(db.lastBlockHash).String(),
 		db.lastBlockHeight)
 	s += fmt.Sprintf(" Unspendable Outputs: %d (%dKB)  txs:%d    UTXO.db file size: %d\n",
@@ -683,7 +683,7 @@ func (db *UnspentDB) GetStats() (s string) {
 
 	s = fmt.Sprintf("UNSPENT: %d txs.  MaxCnt:%d  Dirt:%t  Writ:%t  Abort:%t  Compr:%t\n",
 		hml, len(rec_outs), db.dirtyDB.Get(), db.WritingInProgress.Get(),
-		len(db.abortwritingnow) > 0, db.ComprssedUTXO)
+		len(db.abortwritingnow) > 0, db.comprssedUTXO)
 	s += fmt.Sprintf(" Last Block : %s @ %d\n", btc.NewUint256(db.lastBlockHash).String(),
 		db.lastBlockHeight)
 	return

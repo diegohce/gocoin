@@ -35,3 +35,14 @@ func (db *UnspentDB) DirtyDB() bool {
 func (db *UnspentDB) SetDirtyDB() {
 	db.dirtyDB.Set()
 }
+
+func (db *UnspentDB) ComprssedUTXO() bool {
+	return db.comprssedUTXO
+}
+func (db *UnspentDB) SetComprssedUTXO(v bool) {
+	db.comprssedUTXO = v
+}
+
+func (db *UnspentDB) UnwindBufLen() uint32 {
+	return db.unwindBufLen
+}
