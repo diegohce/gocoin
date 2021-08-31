@@ -35,9 +35,9 @@ func main() {
 	}
 
 	fmt.Println("Decompressing UTXO records")
-	for k, v := range db.HashMap {
+	for k, v := range db.HashMap() {
 		rec := utxo.NewUtxoRecStatic(k, v)
-		db.HashMap[k] = utxo.SerializeU(rec, false, nil)
+		db.HashMapSetIdx(k, utxo.SerializeU(rec, false, nil))
 	}
 	db.ComprssedUTXO = false
 	db.DirtyDB.Set()
