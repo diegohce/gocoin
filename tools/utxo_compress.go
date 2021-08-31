@@ -23,7 +23,7 @@ func main() {
 	sys.LockDatabaseDir(dir)
 	defer sys.UnlockDatabaseDir()
 
-	db := utxo.NewUnspentDb(&utxo.NewUnspentOpts{Dir: dir})
+	db := utxo.NewUnspentDb("builtin", &utxo.NewUnspentOpts{Dir: dir})
 	if db == nil {
 		println("UTXO.db not found.")
 		return

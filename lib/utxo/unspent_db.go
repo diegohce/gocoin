@@ -85,7 +85,11 @@ type NewUnspentOpts struct {
 	UseGoHeap       bool
 }
 
-func NewUnspentDb(opts *NewUnspentOpts) (db *UnspentDB) {
+func NewUnspentDb(backend string, opts *NewUnspentOpts) (db *UnspentDB) {
+	return NewUnspentDb_builtin(opts)
+}
+
+func NewUnspentDb_builtin(opts *NewUnspentOpts) (db *UnspentDB) {
 	//var maxbl_fn string
 	db = new(UnspentDB)
 	db.dir_utxo = opts.Dir
