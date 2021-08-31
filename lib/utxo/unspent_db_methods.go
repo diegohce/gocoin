@@ -19,3 +19,19 @@ func (db *UnspentDB) HashMapLen() int {
 func (db *UnspentDB) LastBlockHash() []byte {
 	return db.lastBlockHash
 }
+
+func (db *UnspentDB) SetLastBlockHeight(v uint32) {
+	db.lastBlockHeight = v
+}
+
+func (db *UnspentDB) LastBlockHeight() uint32 {
+	return db.lastBlockHeight
+}
+
+func (db *UnspentDB) DirtyDB() bool {
+	return db.dirtyDB.Get()
+}
+
+func (db *UnspentDB) SetDirtyDB() {
+	db.dirtyDB.Set()
+}
