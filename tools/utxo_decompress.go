@@ -29,7 +29,7 @@ func main() {
 		return
 	}
 
-	if !db.ComprssedUTXO {
+	if !db.ComprssedUTXO() {
 		fmt.Println("UTXO.db is not compressed.")
 		return
 	}
@@ -39,7 +39,7 @@ func main() {
 		rec := utxo.NewUtxoRecStatic(k, v)
 		db.HashMapSetIdx(k, utxo.SerializeU(rec, false, nil))
 	}
-	db.ComprssedUTXO = false
+	db.SetComprssedUTXO(false)
 	db.SetDirtyDB()
 	fmt.Println("Saving new UTXO.db")
 	db.Close()

@@ -23,6 +23,12 @@ type UTXODB interface {
 
 	SetDirtyDB()
 
+	UnwindBufLen() uint32
+
+	ComprssedUTXO() bool
+
+	SetComprssedUTXO(v bool)
+
 	// CommitBlockTxs commits the given add/del transactions to UTXO and Unwind DBs.
 	CommitBlockTxs(*BlockChanges, []byte) error
 
