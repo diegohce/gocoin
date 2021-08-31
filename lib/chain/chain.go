@@ -121,7 +121,7 @@ func NewChainExt(dbrootdir string, genesis *btc.Uint256, rescan bool, opts *NewC
 			ch.ParseTillBlock(end)
 		}
 	} else {
-		ch.Unspent.LastBlockHeight = end.Height
+		ch.Unspent.SetLastBlockHeight(end.Height)
 	}
 
 	return

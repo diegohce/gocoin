@@ -40,7 +40,7 @@ func main() {
 		db.HashMapSetIdx(k, utxo.SerializeC(rec, false, nil))
 	}
 	db.ComprssedUTXO = true
-	db.DirtyDB.Set()
+	db.SetDirtyDB()
 	fmt.Println("Saving new UTXO.db")
 	db.Close()
 	fmt.Println("Done")

@@ -1,6 +1,8 @@
 package utxo
 
-import "github.com/piotrnar/gocoin/lib/btc"
+import (
+	"github.com/piotrnar/gocoin/lib/btc"
+)
 
 type UTXODB interface {
 	HashMap() map[UtxoKeyType][]byte
@@ -12,6 +14,14 @@ type UTXODB interface {
 	HashMapLen() int
 
 	LastBlockHash() []byte
+
+	SetLastBlockHeight(v uint32)
+
+	LastBlockHeight() uint32
+
+	DirtyDB() bool
+
+	SetDirtyDB()
 
 	// CommitBlockTxs commits the given add/del transactions to UTXO and Unwind DBs.
 	CommitBlockTxs(*BlockChanges, []byte) error

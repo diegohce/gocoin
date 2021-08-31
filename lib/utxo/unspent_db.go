@@ -54,12 +54,12 @@ type UnspentDB struct {
 	sync.RWMutex // used to access hashMap
 
 	lastBlockHash      []byte
-	LastBlockHeight    uint32
+	lastBlockHeight    uint32
 	ComprssedUTXO      bool
 	dir_utxo, dir_undo string
 	volatimemode       bool
 	UnwindBufLen       uint32
-	DirtyDB            sys.SyncBool
+	dirtyDB            sys.SyncBool
 	sync.Mutex
 
 	abortwritingnow   chan bool
@@ -135,7 +135,7 @@ redo:
 	if er != nil {
 		goto fatal_error
 	}
-	db.LastBlockHeight = uint32(u64)
+	db.lastBlockHeight = uint32(u64)
 
 	// If the highest bit of the block number is set, the UTXO records are compressed
 	db.ComprssedUTXO = (u64 & 0x8000000000000000) != 0
@@ -150,7 +150,7 @@ redo:
 		goto fatal_error
 	}
 
-	//fmt.Println("Last block height", db.LastBlockHeight, "   Number of records", u64)
+	//fmt.Println("Last block height", db.lastBlockHeight, "   Number of records", u64)
 	cnt_dwn_from = int(u64 / 100)
 	perc = 0
 
@@ -196,7 +196,7 @@ redo:
 
 	fmt.Print("\r                                                                 \r")
 
-	atomic.StoreUint32(&db.CurrentHeightOnDisk, db.LastBlockHeight)
+	atomic.StoreUint32(&db.CurrentHeightOnDisk, db.lastBlockHeight)
 	if db.ComprssedUTXO {
 		FullUtxoRec = FullUtxoRecC
 		NewUtxoRecStatic = NewUtxoRecStaticC
@@ -217,7 +217,7 @@ fatal_error:
 		fname = "UTXO.old"
 		goto redo
 	}
-	db.LastBlockHeight = 0
+	db.lastBlockHeight = 0
 	db.lastBlockHash = nil
 	db.hashMap = make(map[UtxoKeyType][]byte, UTXO_RECORDS_PREALLOC)
 
@@ -243,7 +243,7 @@ func (db *UnspentDB) save() {
 	total_records = int64(len(db.hashMap))
 
 	buf := bytes.NewBuffer(make([]byte, 0, save_buffer_min+0x1000)) // add 4K extra for the last record (it will still be able to grow over it)
-	u64 := uint64(db.LastBlockHeight)
+	u64 := uint64(db.lastBlockHeight)
 	if db.ComprssedUTXO {
 		u64 |= 0x8000000000000000
 	}
@@ -352,9 +352,9 @@ finito:
 	exit_channel <- abort
 
 	if !abort {
-		db.DirtyDB.Clr()
+		db.dirtyDB.Clr()
 		//println("utxo written OK in", time.Now().Sub(start_time).String(), timewaits)
-		atomic.StoreUint32(&db.CurrentHeightOnDisk, db.LastBlockHeight)
+		atomic.StoreUint32(&db.CurrentHeightOnDisk, db.lastBlockHeight)
 	}
 	db.WritingInProgress.Clr()
 	db.writingDone.Done()
@@ -399,13 +399,13 @@ func (db *UnspentDB) CommitBlockTxs(changes *BlockChanges, blhash []byte) (e err
 		db.lastBlockHash = make([]byte, 32)
 	}
 	copy(db.lastBlockHash, blhash)
-	db.LastBlockHeight = changes.Height
+	db.lastBlockHeight = changes.Height
 
 	if changes.Height > db.UnwindBufLen {
 		os.Remove(fmt.Sprint(db.dir_undo, changes.Height-db.UnwindBufLen))
 	}
 
-	db.DirtyDB.Set()
+	db.dirtyDB.Set()
 	wg.Wait()
 	return
 }
@@ -423,7 +423,7 @@ func (db *UnspentDB) UndoBlockTxs(bl *btc.Block, newhash []byte) {
 		db.del(tx.Hash.Hash[:], lst)
 	}
 
-	fn := fmt.Sprint(db.dir_undo, db.LastBlockHeight)
+	fn := fmt.Sprint(db.dir_undo, db.lastBlockHeight)
 	var addback []*UtxoRec
 
 	if _, er := os.Stat(fn); er != nil {
@@ -468,9 +468,9 @@ func (db *UnspentDB) UndoBlockTxs(bl *btc.Block, newhash []byte) {
 	}
 
 	os.Remove(fn)
-	db.LastBlockHeight--
+	db.lastBlockHeight--
 	copy(db.lastBlockHash, newhash)
-	db.DirtyDB.Set()
+	db.dirtyDB.Set()
 }
 
 // Idle should be called when the main thread is idle.
@@ -482,7 +482,7 @@ func (db *UnspentDB) Idle() bool {
 	db.Mutex.Lock()
 	defer db.Mutex.Unlock()
 
-	if db.DirtyDB.Get() && db.LastBlockHeight-atomic.LoadUint32(&db.CurrentHeightOnDisk) > UTXO_SKIP_SAVE_BLOCKS {
+	if db.dirtyDB.Get() && db.lastBlockHeight-atomic.LoadUint32(&db.CurrentHeightOnDisk) > UTXO_SKIP_SAVE_BLOCKS {
 		return db.Save()
 	}
 
@@ -509,7 +509,7 @@ func (db *UnspentDB) HurryUp() {
 // Close flushes the data and closes all the files.
 func (db *UnspentDB) Close() {
 	db.volatimemode = false
-	if db.DirtyDB.Get() {
+	if db.dirtyDB.Get() {
 		db.HurryUp()
 		db.Save()
 	}
@@ -664,11 +664,11 @@ func (db *UnspentDB) UTXOStats() (s string) {
 
 	s = fmt.Sprintf("UNSPENT: %.8f BTC in %d outs from %d txs. %.8f BTC in coinbase.\n",
 		float64(sum)/1e8, outcnt, lele, float64(sumcb)/1e8)
-	s += fmt.Sprintf(" MaxTxOutCnt: %d  DirtyDB: %t  Writing: %t  Abort: %t  Compressed: %t\n",
-		len(rec_outs), db.DirtyDB.Get(), db.WritingInProgress.Get(), len(db.abortwritingnow) > 0,
+	s += fmt.Sprintf(" MaxTxOutCnt: %d  dirtyDB: %t  Writing: %t  Abort: %t  Compressed: %t\n",
+		len(rec_outs), db.dirtyDB.Get(), db.WritingInProgress.Get(), len(db.abortwritingnow) > 0,
 		db.ComprssedUTXO)
 	s += fmt.Sprintf(" Last Block : %s @ %d\n", btc.NewUint256(db.lastBlockHash).String(),
-		db.LastBlockHeight)
+		db.lastBlockHeight)
 	s += fmt.Sprintf(" Unspendable Outputs: %d (%dKB)  txs:%d    UTXO.db file size: %d\n",
 		unspendable, unspendable_bytes>>10, unspendable_recs, filesize)
 
@@ -682,10 +682,10 @@ func (db *UnspentDB) GetStats() (s string) {
 	db.RWMutex.RUnlock()
 
 	s = fmt.Sprintf("UNSPENT: %d txs.  MaxCnt:%d  Dirt:%t  Writ:%t  Abort:%t  Compr:%t\n",
-		hml, len(rec_outs), db.DirtyDB.Get(), db.WritingInProgress.Get(),
+		hml, len(rec_outs), db.dirtyDB.Get(), db.WritingInProgress.Get(),
 		len(db.abortwritingnow) > 0, db.ComprssedUTXO)
 	s += fmt.Sprintf(" Last Block : %s @ %d\n", btc.NewUint256(db.lastBlockHash).String(),
-		db.LastBlockHeight)
+		db.lastBlockHeight)
 	return
 }
 
