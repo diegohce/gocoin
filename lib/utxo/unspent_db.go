@@ -53,7 +53,7 @@ type UnspentDB struct {
 	hashMap      map[UtxoKeyType][]byte
 	sync.RWMutex // used to access hashMap
 
-	LastBlockHash      []byte
+	lastBlockHash      []byte
 	LastBlockHeight    uint32
 	ComprssedUTXO      bool
 	dir_utxo, dir_undo string
@@ -140,8 +140,8 @@ redo:
 	// If the highest bit of the block number is set, the UTXO records are compressed
 	db.ComprssedUTXO = (u64 & 0x8000000000000000) != 0
 
-	db.LastBlockHash = make([]byte, 32)
-	_, er = rd.Read(db.LastBlockHash)
+	db.lastBlockHash = make([]byte, 32)
+	_, er = rd.Read(db.lastBlockHash)
 	if er != nil {
 		goto fatal_error
 	}
@@ -218,7 +218,7 @@ fatal_error:
 		goto redo
 	}
 	db.LastBlockHeight = 0
-	db.LastBlockHash = nil
+	db.lastBlockHash = nil
 	db.hashMap = make(map[UtxoKeyType][]byte, UTXO_RECORDS_PREALLOC)
 
 	return
@@ -248,7 +248,7 @@ func (db *UnspentDB) save() {
 		u64 |= 0x8000000000000000
 	}
 	binary.Write(buf, binary.LittleEndian, u64)
-	buf.Write(db.LastBlockHash)
+	buf.Write(db.lastBlockHash)
 	binary.Write(buf, binary.LittleEndian, uint64(total_records))
 
 	// The data is written in a separate process
@@ -297,7 +297,7 @@ func (db *UnspentDB) save() {
 			os.Rename(fname, db.dir_utxo+"UTXO.db")
 		}
 		db.lastFileClosed.Done()
-	}(db.dir_utxo + btc.NewUint256(db.LastBlockHash).String() + ".db.tmp")
+	}(db.dir_utxo + btc.NewUint256(db.lastBlockHash).String() + ".db.tmp")
 
 	if UTXO_WRITING_TIME_TARGET == 0 {
 		hurryup = true
@@ -395,10 +395,10 @@ func (db *UnspentDB) CommitBlockTxs(changes *BlockChanges, blhash []byte) (e err
 
 	db.commit(changes)
 
-	if db.LastBlockHash == nil {
-		db.LastBlockHash = make([]byte, 32)
+	if db.lastBlockHash == nil {
+		db.lastBlockHash = make([]byte, 32)
 	}
-	copy(db.LastBlockHash, blhash)
+	copy(db.lastBlockHash, blhash)
 	db.LastBlockHeight = changes.Height
 
 	if changes.Height > db.UnwindBufLen {
@@ -469,7 +469,7 @@ func (db *UnspentDB) UndoBlockTxs(bl *btc.Block, newhash []byte) {
 
 	os.Remove(fn)
 	db.LastBlockHeight--
-	copy(db.LastBlockHash, newhash)
+	copy(db.lastBlockHash, newhash)
 	db.DirtyDB.Set()
 }
 
@@ -667,7 +667,7 @@ func (db *UnspentDB) UTXOStats() (s string) {
 	s += fmt.Sprintf(" MaxTxOutCnt: %d  DirtyDB: %t  Writing: %t  Abort: %t  Compressed: %t\n",
 		len(rec_outs), db.DirtyDB.Get(), db.WritingInProgress.Get(), len(db.abortwritingnow) > 0,
 		db.ComprssedUTXO)
-	s += fmt.Sprintf(" Last Block : %s @ %d\n", btc.NewUint256(db.LastBlockHash).String(),
+	s += fmt.Sprintf(" Last Block : %s @ %d\n", btc.NewUint256(db.lastBlockHash).String(),
 		db.LastBlockHeight)
 	s += fmt.Sprintf(" Unspendable Outputs: %d (%dKB)  txs:%d    UTXO.db file size: %d\n",
 		unspendable, unspendable_bytes>>10, unspendable_recs, filesize)
@@ -684,7 +684,7 @@ func (db *UnspentDB) GetStats() (s string) {
 	s = fmt.Sprintf("UNSPENT: %d txs.  MaxCnt:%d  Dirt:%t  Writ:%t  Abort:%t  Compr:%t\n",
 		hml, len(rec_outs), db.DirtyDB.Get(), db.WritingInProgress.Get(),
 		len(db.abortwritingnow) > 0, db.ComprssedUTXO)
-	s += fmt.Sprintf(" Last Block : %s @ %d\n", btc.NewUint256(db.LastBlockHash).String(),
+	s += fmt.Sprintf(" Last Block : %s @ %d\n", btc.NewUint256(db.lastBlockHash).String(),
 		db.LastBlockHeight)
 	return
 }

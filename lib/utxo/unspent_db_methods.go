@@ -15,3 +15,7 @@ func (db *UnspentDB) HashMapSetIdx(ind UtxoKeyType, value []byte) {
 func (db *UnspentDB) HashMapLen() int {
 	return len(db.hashMap)
 }
+
+func (db *UnspentDB) LastBlockHash() []byte {
+	return db.lastBlockHash
+}

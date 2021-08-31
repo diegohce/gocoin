@@ -11,6 +11,8 @@ type UTXODB interface {
 
 	HashMapLen() int
 
+	LastBlockHash() []byte
+
 	// CommitBlockTxs commits the given add/del transactions to UTXO and Unwind DBs.
 	CommitBlockTxs(*BlockChanges, []byte) error
 
