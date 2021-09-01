@@ -142,7 +142,7 @@ func show_info(par string) {
 	// Memory used
 	al, sy := sys.MemUsed()
 	fmt.Printf("Heap_used: %d MB,  System_used: %d MB,  UTXO-X-mem: %d MB in %d recs,  Saving: %t\n", al>>20, sy>>20,
-		common.Memory.Bytes>>20, common.Memory.Allocs, common.BlockChain.Unspent.WritingInProgress.Get())
+		common.Memory.Bytes>>20, common.Memory.Allocs, common.BlockChain.Unspent.WritingInProgress())
 
 	network.MutexRcv.Lock()
 	fmt.Println("Last Header:", network.LastCommitedHeader.BlockHash.String(), "@", network.LastCommitedHeader.Height)
@@ -157,9 +157,12 @@ func show_info(par string) {
 	common.Last.Mutex.Unlock()
 
 	network.Mutex_net.Lock()
+	currentHeightOnDisk := common.BlockChain.Unspent.CurrentHeightOnDisk()
+
 	fmt.Printf("Blocks Queued: %d,  Cached: %d,  Discarded: %d,  To Get: %d/%d,  UTXO.db on disk: %d\n",
 		len(network.NetBlocks), cached, discarded, b2g_len, b2g_idx_len,
-		atomic.LoadUint32(&common.BlockChain.Unspent.CurrentHeightOnDisk))
+		atomic.LoadUint32(&currentHeightOnDisk))
+	//atomic.LoadUint32(&common.BlockChain.Unspent.CurrentHeightOnDisk))
 	network.Mutex_net.Unlock()
 
 	network.TxMutex.Lock()

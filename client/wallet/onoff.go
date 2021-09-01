@@ -76,8 +76,8 @@ func LoadBalance() {
 	if aborted {
 		InitMaps(true)
 	} else {
-		common.BlockChain.Unspent.CB.NotifyTxAdd = TxNotifyAdd
-		common.BlockChain.Unspent.CB.NotifyTxDel = TxNotifyDel
+		common.BlockChain.Unspent.SetCBNotifyTxAdd(TxNotifyAdd)
+		common.BlockChain.Unspent.SetCBNotifyTxDel(TxNotifyDel)
 		common.SetBool(&common.WalletON, true)
 	}
 	common.SetUint32(&common.WalletProgress, 0)
@@ -89,8 +89,8 @@ func Disable() {
 		return
 	}
 	UpdateMapSizes()
-	common.BlockChain.Unspent.CB.NotifyTxAdd = nil
-	common.BlockChain.Unspent.CB.NotifyTxDel = nil
+	common.BlockChain.Unspent.SetCBNotifyTxAdd(nil)
+	common.BlockChain.Unspent.SetCBNotifyTxDel(nil)
 	common.SetBool(&common.WalletON, false)
 	InitMaps(true)
 }
