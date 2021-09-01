@@ -27,9 +27,9 @@ type OneAllAddrBal struct {
 func (ur *OneAllAddrInp) GetRec() (rec *utxo.UtxoRec, vout uint32) {
 	var ind utxo.UtxoKeyType
 	copy(ind[:], ur[:])
-	common.BlockChain.Unspent.RWMutex.RLock()
+	common.BlockChain.Unspent.RWMutexRLock()
 	v := common.BlockChain.Unspent.HashMapIdx(ind)
-	common.BlockChain.Unspent.RWMutex.RUnlock()
+	common.BlockChain.Unspent.RWMutexRUnlock()
 	if v != nil {
 		vout = binary.LittleEndian.Uint32(ur[utxo.UtxoIdxLen:])
 		rec = utxo.NewUtxoRec(ind, v)

@@ -13,6 +13,10 @@ type UTXODB interface {
 
 	HashMapLen() int
 
+	RWMutexRUnlock()
+
+	RWMutexRLock()
+
 	LastBlockHash() []byte
 
 	SetLastBlockHeight(v uint32)

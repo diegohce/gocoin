@@ -46,3 +46,11 @@ func (db *UnspentDB) SetComprssedUTXO(v bool) {
 func (db *UnspentDB) UnwindBufLen() uint32 {
 	return db.unwindBufLen
 }
+
+func (db *UnspentDB) RWMutexRLock() {
+	db.rwMutex.RLock()
+}
+
+func (db *UnspentDB) RWMutexRUnlock() {
+	db.rwMutex.RUnlock()
+}
