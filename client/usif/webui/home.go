@@ -149,7 +149,7 @@ func json_system(w http.ResponseWriter, r *http.Request) {
 	out.NetworkHashRate = lastHrate
 	mutexHrate.Unlock()
 
-	out.SavingUTXO = common.BlockChain.Unspent.WritingInProgress.Get()
+	out.SavingUTXO = common.BlockChain.Unspent.WritingInProgress()
 
 	bx, er := json.Marshal(out)
 	if er == nil {

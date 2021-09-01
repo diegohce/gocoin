@@ -17,6 +17,10 @@ type UTXODB interface {
 
 	RWMutexRLock()
 
+	WritingInProgress() bool
+
+	CurrentHeightOnDisk() uint32
+
 	LastBlockHash() []byte
 
 	SetLastBlockHeight(v uint32)
@@ -31,7 +35,11 @@ type UTXODB interface {
 
 	ComprssedUTXO() bool
 
-	SetComprssedUTXO(v bool)
+	SetComprssedUTXO(bool)
+
+	SetCBNotifyTxAdd(func(*UtxoRec))
+
+	SetCBNotifyTxDel(func(*UtxoRec, []bool))
 
 	// CommitBlockTxs commits the given add/del transactions to UTXO and Unwind DBs.
 	CommitBlockTxs(*BlockChanges, []byte) error
@@ -66,5 +74,18 @@ type UTXODB interface {
 
 type UtxoDBNoops struct{}
 
-func (UtxoDBNoops) Idle()    {}
-func (UtxoDBNoops) HurryUp() {}
+func (UtxoDBNoops) Idle()         {}
+func (UtxoDBNoops) HurryUp()      {}
+func (UtxoDBNoops) DirtyDB() bool { return false }
+func (UtxoDBNoops) SetDirtyDB()   {}
+
+type UtxoEmptyLocks struct{}
+
+func (UtxoEmptyLocks) RWMutexRUnlock() {}
+func (UtxoEmptyLocks) RWMutexRLock()   {}
+
+type UtxoEmptyCallbacks struct{}
+
+func (UtxoEmptyCallbacks) SetCBNotifyTxAdd(fn func(*UtxoRec)) {}
+
+func (UtxoEmptyCallbacks) SetCBNotifyTxDel(fn func(*UtxoRec, []bool)) {}

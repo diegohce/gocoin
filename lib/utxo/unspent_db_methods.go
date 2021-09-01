@@ -54,3 +54,19 @@ func (db *UnspentDB) RWMutexRLock() {
 func (db *UnspentDB) RWMutexRUnlock() {
 	db.rwMutex.RUnlock()
 }
+
+func (db *UnspentDB) WritingInProgress() bool {
+	return db.writingInProgress.Get()
+}
+
+func (db *UnspentDB) CurrentHeightOnDisk() uint32 {
+	return db.currentHeightOnDisk
+}
+
+func (db *UnspentDB) SetCBNotifyTxAdd(fn func(*UtxoRec)) {
+	db.cb.NotifyTxAdd = fn
+}
+
+func (db *UnspentDB) SetCBNotifyTxDel(fn func(*UtxoRec, []bool)) {
+	db.cb.NotifyTxDel = fn
+}
