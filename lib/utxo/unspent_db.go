@@ -86,7 +86,15 @@ type NewUnspentOpts struct {
 }
 
 func NewUnspentDb(backend string, opts *NewUnspentOpts) UTXODB {
-	return NewUnspentDb_builtin(opts)
+	var db UTXODB
+
+	switch backend {
+	case "sqlite3":
+		db = NewUnspentDb_sqlite3(opts)
+	default:
+		db = NewUnspentDb_builtin(opts)
+	}
+	return db
 }
 
 func NewUnspentDb_builtin(opts *NewUnspentOpts) (db *UnspentDB) {

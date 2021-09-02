@@ -74,10 +74,11 @@ type UTXODB interface {
 
 type UtxoDBNoops struct{}
 
-func (UtxoDBNoops) Idle()         {}
-func (UtxoDBNoops) HurryUp()      {}
-func (UtxoDBNoops) DirtyDB() bool { return false }
-func (UtxoDBNoops) SetDirtyDB()   {}
+func (UtxoDBNoops) Idle() bool           { return true }
+func (UtxoDBNoops) HurryUp()             {}
+func (UtxoDBNoops) DirtyDB() bool        { return false }
+func (UtxoDBNoops) SetDirtyDB()          {}
+func (UtxoDBNoops) UnwindBufLen() uint32 { return 256 }
 
 type UtxoEmptyLocks struct{}
 
@@ -89,3 +90,8 @@ type UtxoEmptyCallbacks struct{}
 func (UtxoEmptyCallbacks) SetCBNotifyTxAdd(fn func(*UtxoRec)) {}
 
 func (UtxoEmptyCallbacks) SetCBNotifyTxDel(fn func(*UtxoRec, []bool)) {}
+
+type UtxoNotCompressed struct{}
+
+func (UtxoNotCompressed) ComprssedUTXO() bool     { return false }
+func (UtxoNotCompressed) SetComprssedUTXO(_ bool) {}
