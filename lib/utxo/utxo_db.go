@@ -95,3 +95,15 @@ type UtxoNotCompressed struct{}
 
 func (UtxoNotCompressed) ComprssedUTXO() bool     { return false }
 func (UtxoNotCompressed) SetComprssedUTXO(_ bool) {}
+
+type UtxoLastBlockHeight struct {
+	lastBlockHeight uint32
+}
+
+func (u *UtxoLastBlockHeight) SetLastBlockHeight(v uint32) {
+	u.lastBlockHeight = v
+}
+
+func (u *UtxoLastBlockHeight) LastBlockHeight() uint32 {
+	return u.lastBlockHeight
+}
