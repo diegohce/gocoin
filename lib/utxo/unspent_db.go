@@ -85,7 +85,7 @@ type NewUnspentOpts struct {
 	UseGoHeap       bool
 }
 
-func NewUnspentDb(backend string, opts *NewUnspentOpts) (db *UnspentDB) {
+func NewUnspentDb(backend string, opts *NewUnspentOpts) UTXODB {
 	return NewUnspentDb_builtin(opts)
 }
 

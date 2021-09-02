@@ -13,8 +13,9 @@ import (
 var AbortNow bool // set it to true to abort any activity
 
 type Chain struct {
-	Blocks  *BlockDB        // blockchain.dat and blockchain.idx
-	Unspent *utxo.UnspentDB // unspent folder
+	Blocks *BlockDB // blockchain.dat and blockchain.idx
+	//Unspent *utxo.UnspentDB // unspent folder
+	Unspent utxo.UTXODB
 
 	BlockTreeRoot   *BlockTreeNode
 	blockTreeEnd    *BlockTreeNode
